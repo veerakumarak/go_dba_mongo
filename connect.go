@@ -10,14 +10,14 @@ import (
 	"time"
 )
 
-func Connect[Entity any](config Config) dba.Repository[Entity] {
+func Connect[Entity any, Id string | uint64](config Config) dba.Repository[Entity, Id] {
 	timeout := time.Duration(config.DbTimeOut) * time.Second
 	client, err := newMongoClient(config.DbUrl, timeout)
 	if err != nil {
 		log.Fatal(dba.ErrRepositoryClientNotAbleToConnect)
 	}
 
-	return &mongoRepository[Entity]{
+	return &mongoRepository[Entity, Id]{
 		timeout:    timeout,
 		collection: client.Database(config.DbName).Collection(config.DbCollection),
 	}

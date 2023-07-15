@@ -10,12 +10,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type mongoRepository[Entity any] struct {
+type mongoRepository[Entity any, Id string | uint64] struct {
 	collection *mongo.Collection
 	timeout    time.Duration
 }
 
-func (r *mongoRepository[Entity]) Count() (int64, error) {
+func (r *mongoRepository[Entity, Id]) Count() (uint64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
@@ -23,20 +23,21 @@ func (r *mongoRepository[Entity]) Count() (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return count, nil
+	return uint64(count), nil
 }
 
-func (r *mongoRepository[Entity]) FindById(entity *Entity, id string) error {
+func (r *mongoRepository[Entity, Id]) FindById(entity *Entity, id Id) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	objectId, err := convertStringToId(id)
-	if err != nil {
-		return err
-	}
+	// ToDo check if this is required
+	//objectId, err := convertStringToId(id)
+	//if err != nil {
+	//	return err
+	//}
 
-	filter := bson.M{"_id": objectId}
-	err = r.collection.FindOne(ctx, filter).Decode(entity)
+	filter := bson.M{"_id": id}
+	err := r.collection.FindOne(ctx, filter).Decode(entity)
 	if err == mongo.ErrNoDocuments {
 		return dba.ErrRepositoryEntityNotFound
 	}
@@ -51,7 +52,7 @@ func (r *mongoRepository[Entity]) FindById(entity *Entity, id string) error {
 //	panic("implement me")
 //}
 
-func (r *mongoRepository[Entity]) Save(entity *Entity) error {
+func (r *mongoRepository[Entity, Id]) Save(entity *Entity) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
@@ -63,12 +64,12 @@ func (r *mongoRepository[Entity]) Save(entity *Entity) error {
 	return nil
 }
 
-func (r *mongoRepository[Entity]) SaveAll(entity []Entity) error {
+func (r *mongoRepository[Entity, Id]) SaveAll(entity []Entity) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (r *mongoRepository[Entity]) ExistsById(id string) (bool, error) {
+func (r *mongoRepository[Entity, Id]) ExistsById(id Id) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
@@ -83,7 +84,7 @@ func (r *mongoRepository[Entity]) ExistsById(id string) (bool, error) {
 	return true, nil
 }
 
-func (r *mongoRepository[Entity]) DeleteById(id string) error {
+func (r *mongoRepository[Entity, Id]) DeleteById(id Id) error {
 	//TODO implement me
 	panic("implement me")
 }
