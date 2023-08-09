@@ -1,7 +1,7 @@
 package mongo
 
 import (
-	"github.com/pkg/errors"
+	"errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -12,10 +12,10 @@ var (
 	ErrSerialiseDocToEntity      = errors.New("serialise: unable to convert doc to entity")
 )
 
-func convertStringToId(hexId string) (primitive.ObjectID, error) {
+func ConvertStringToId(hexId string) (primitive.ObjectID, error) {
 	return primitive.ObjectIDFromHex(hexId)
 }
 
-func convertIdToString(id primitive.ObjectID) (string, error) {
+func ConvertIdToString(id primitive.ObjectID) (string, error) {
 	return id.Hex(), nil
 }
