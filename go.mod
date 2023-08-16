@@ -3,7 +3,7 @@ module github.com/veerakumarak/go_dba_mongo
 go 1.19
 
 require (
-	github.com/veerakumarak/go_dba_core v1.0.0
+	github.com/veerakumarak/go_dba_core v1.1.1
 	go.mongodb.org/mongo-driver v1.11.4
 )
 
