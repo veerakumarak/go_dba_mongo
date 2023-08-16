@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	dba "github.com/veerakumarak/go_dba_core"
 	"reflect"
 	"time"
@@ -16,7 +17,7 @@ type mongoRepository[Entity any, Id string | uint64] struct {
 	timeout    time.Duration
 }
 
-func (r *mongoRepository[Entity, Id]) getFilter(id Id) (bson.M, error) {
+func (r *mongoRepository[Entity, Id]) getIdFilter(id Id) (bson.M, error) {
 	var filter bson.M
 	if reflect.TypeOf(id).Kind() == reflect.Uint64 {
 		filter = bson.M{"_id": id}
@@ -28,6 +29,14 @@ func (r *mongoRepository[Entity, Id]) getFilter(id Id) (bson.M, error) {
 		filter = bson.M{"_id": objectId}
 	}
 	return filter, nil
+}
+
+func (r *mongoRepository[Entity, Id]) getFilter(searchOps map[string]interface{}) bson.M {
+	filter := bson.M{}
+	for k, v := range searchOps {
+		filter[k] = v
+	}
+	return filter
 }
 
 func (r *mongoRepository[Entity, Id]) getIdValue(res *mongo.InsertOneResult) reflect.Value {
@@ -54,7 +63,7 @@ func (r *mongoRepository[Entity, Id]) FindById(entity *Entity, id Id) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	filter, err := r.getFilter(id)
+	filter, err := r.getIdFilter(id)
 	if err != nil {
 		return err
 	}
@@ -69,10 +78,21 @@ func (r *mongoRepository[Entity, Id]) FindById(entity *Entity, id Id) error {
 	return nil
 }
 
-//func (r *mongoRepository[Entity]) Find(search dba.Search) ([]Entity, error) {
-//	//TODO implement me
-//	panic("implement me")
-//}
+func (r *mongoRepository[Entity, Id]) Find(searchOps map[string]interface{}) ([]*Entity, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	var entities []*Entity
+	cursor, err := r.collection.Find(ctx, r.getFilter(searchOps))
+	if err != nil {
+		return nil, errors.Wrap(err, "repository.analyticss.getAll")
+	}
+	if err = cursor.All(ctx, &entities); err != nil {
+		return nil, errors.Wrap(err, "repository.analyticss.getAll")
+	}
+
+	return entities, nil
+}
 
 func (r *mongoRepository[Entity, Id]) Save(entity *Entity) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
@@ -96,7 +116,7 @@ func (r *mongoRepository[Entity, Id]) ExistsById(id Id) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	filter, err := r.getFilter(id)
+	filter, err := r.getIdFilter(id)
 	if err != nil {
 		return false, err
 	}
