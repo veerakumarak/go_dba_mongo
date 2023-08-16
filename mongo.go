@@ -107,7 +107,7 @@ func (r *mongoRepository[Entity, Id]) Save(entity *Entity) error {
 	return nil
 }
 
-func (r *mongoRepository[Entity, Id]) SaveAll(entity []Entity) error {
+func (r *mongoRepository[Entity, Id]) SaveAll(entity []*Entity) error {
 	//TODO implement me
 	panic("implement me")
 }
